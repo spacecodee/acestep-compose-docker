@@ -72,8 +72,11 @@ Configure in `.env`:
 
 - `ACESTEP_AUTO_DOWNLOAD_MODELS=true|false`
 - `ACESTEP_PRELOAD_MODELS=acestep-v15-xl-base,acestep-5Hz-lm-4B`
+- `ACESTEP_REPAIR_INVALID_MODELS=true|false` (force re-download if a model folder exists but is invalid/incomplete)
 
 Downloaded checkpoints are persisted in `./checkpoints`.
+
+At runtime, Gradio starts with `ACESTEP_CONFIG_PATH` and `ACESTEP_LM_MODEL_PATH` as default selected models.
 
 ## flash-attn
 

@@ -9,6 +9,9 @@ API_PORT="${ACESTEP_API_PORT:-8000}"
 AUTO_DOWNLOAD_MODELS="${ACESTEP_AUTO_DOWNLOAD_MODELS:-true}"
 PRELOAD_MODELS="${ACESTEP_PRELOAD_MODELS:-acestep-v15-xl-base,acestep-5Hz-lm-4B}"
 CHECKPOINTS_DIR="${ACESTEP_CHECKPOINTS_DIR:-/app/checkpoints}"
+REPAIR_INVALID_MODELS="${ACESTEP_REPAIR_INVALID_MODELS:-true}"
+DEFAULT_DIT_MODEL="${ACESTEP_CONFIG_PATH:-acestep-v15-turbo}"
+DEFAULT_LM_MODEL="${ACESTEP_LM_MODEL_PATH:-acestep-5Hz-lm-1.7B}"
 
 is_true() {
   case "${1,,}" in
@@ -28,13 +31,48 @@ download_model_if_missing() {
   local model="$1"
   local model_dir="${CHECKPOINTS_DIR}/${model}"
 
-  if [ -d "${model_dir}" ]; then
+  if model_looks_valid "${model}"; then
     echo "Startup model already present: ${model}"
     return 0
   fi
 
-  echo "Downloading startup model: ${model}"
-  uv run --no-sync acestep-download --model "${model}"
+  if [ -d "${model_dir}" ] && is_true "${REPAIR_INVALID_MODELS}"; then
+    echo "Startup model appears incomplete/invalid, forcing re-download: ${model}"
+    uv run --no-sync acestep-download --model "${model}" --force
+  else
+    echo "Downloading startup model: ${model}"
+    uv run --no-sync acestep-download --model "${model}"
+  fi
+
+  if ! model_looks_valid "${model}"; then
+    echo "Warning: Startup model still looks invalid after download: ${model}" >&2
+  fi
+
+  return 0
+}
+
+model_has_weights() {
+  local model_dir="$1"
+  compgen -G "${model_dir}/*.safetensors" > /dev/null || \
+    compgen -G "${model_dir}/*.bin" > /dev/null || \
+    compgen -G "${model_dir}/*.pt" > /dev/null
+}
+
+model_looks_valid() {
+  local model="$1"
+  local model_dir="${CHECKPOINTS_DIR}/${model}"
+
+  [ -d "${model_dir}" ] || return 1
+
+  if [[ "${model}" == acestep-v15-* ]]; then
+    [ -f "${model_dir}/config.json" ] || return 1
+    grep -q '"model_type"[[:space:]]*:' "${model_dir}/config.json" || return 1
+    [ -f "${model_dir}/silence_latent.pt" ] || return 1
+    model_has_weights "${model_dir}" || return 1
+    return 0
+  fi
+
+  model_has_weights "${model_dir}"
 }
 
 download_startup_models() {
@@ -58,7 +96,11 @@ download_startup_models() {
 }
 
 start_gradio() {
-  uv run --no-sync acestep --server-name "${GRADIO_HOST}" --port "${GRADIO_PORT}"
+  uv run --no-sync acestep \
+    --server-name "${GRADIO_HOST}" \
+    --port "${GRADIO_PORT}" \
+    --config_path "${DEFAULT_DIT_MODEL}" \
+    --lm_model_path "${DEFAULT_LM_MODEL}"
 }
 
 start_api() {
