@@ -1,4 +1,7 @@
-FROM nvidia/cuda:12.8.0-cudnn-runtime-ubuntu22.04
+ARG CUDA_VARIANT=runtime
+FROM nvidia/cuda:12.8.0-cudnn-${CUDA_VARIANT}-ubuntu22.04
+
+ARG FLASH_ATTN_MODE=auto
 
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
@@ -13,6 +16,8 @@ RUN set -eux; \
     apt-get install -y --no-install-recommends \
         software-properties-common \
         python3-pip \
+        build-essential \
+        ninja-build \
         git \
         ffmpeg \
         libsndfile1 \
@@ -36,8 +41,10 @@ RUN set -eux; \
         torchvision==0.25.0+cu128 \
         torchaudio==2.10.0+cu128 \
         --extra-index-url https://download.pytorch.org/whl/cu128; \
-    # Exclude macOS-only dependencies from Linux builds.
-    grep -Ev '^[[:space:]]*(mlx|mlx-lm)([<>=!~].*)?$' requirements.txt > /tmp/requirements.linux.txt; \
+    # Exclude macOS-only deps and optional flash-attn from base Linux install.
+    exclude_re='^[[:space:]]*(mlx|mlx-lm|flash-attn|flash_attn)'; \
+    exclude_re="${exclude_re}([<>=!~].*)?$"; \
+    grep -Ev "$exclude_re" requirements.txt > /tmp/requirements.linux.txt; \
     python -m pip install --no-cache-dir -r /tmp/requirements.linux.txt --no-deps; \
     python -m pip install --no-cache-dir -r /tmp/requirements.linux.txt; \
     if [ -d "acestep/third_parts/nano-vllm" ]; then \
@@ -47,7 +54,22 @@ RUN set -eux; \
         python -m pip install --no-cache-dir "triton>=3.0.0"; \
     fi; \
     if [ "$(uname -s)" = "Linux" ] && [ "$(uname -m)" = "x86_64" ]; then \
-        python -m pip install --no-cache-dir --prefer-binary flash-attn; \
+        case "${FLASH_ATTN_MODE}" in \
+            off) \
+                echo "Skipping flash-attn by configuration (FLASH_ATTN_MODE=off)."; \
+                ;; \
+            auto) \
+                python -m pip install --no-cache-dir --only-binary=:all: flash-attn || \
+                    echo "Skipping flash-attn (no compatible binary wheel for this platform)."; \
+                ;; \
+            required) \
+                python -m pip install --no-cache-dir --no-build-isolation flash-attn; \
+                ;; \
+            *) \
+                echo "Invalid FLASH_ATTN_MODE=${FLASH_ATTN_MODE}. Use: off, auto, required." >&2; \
+                exit 1; \
+                ;; \
+        esac; \
     fi; \
     rm -rf /var/lib/apt/lists/* /tmp/get-pip.py /tmp/requirements.linux.txt
 

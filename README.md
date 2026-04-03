@@ -46,6 +46,20 @@ Use the CPU override file for environments without a GPU:
 docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
 ```
 
+## flash-attn (Optional or Required)
+
+No OS change is required. You can keep Ubuntu 22.04 and choose one of these modes in `.env`:
+
+- `FLASH_ATTN_MODE=off`: never install `flash-attn`.
+- `FLASH_ATTN_MODE=auto` (default): install only if a compatible binary wheel exists.
+- `FLASH_ATTN_MODE=required`: fail the build if `flash-attn` cannot be installed.
+
+If you use `FLASH_ATTN_MODE=required`, also set:
+
+- `CUDA_VARIANT=devel`
+
+This uses the CUDA devel base image so source builds are possible when no wheel is available.
+
 ## Run Modes
 
 Set `RUN_MODE` in `.env`:
