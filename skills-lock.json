@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "acestep": {
+      "source": "ace-step/ace-step-1.5",
+      "sourceType": "github",
+      "computedHash": "135d990530c393fedb2663cd0e67a112d2e2864719e50e194ca043466e44aebb"
+    },
+    "acestep-docs": {
+      "source": "ace-step/ace-step-1.5",
+      "sourceType": "github",
+      "computedHash": "4fa6a450bcaf1235d391a799a309f646888fcc8db475a58f6b0f244615498ccd"
+    }
+  }
+}
