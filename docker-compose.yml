@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         - CUDA_VARIANT=${CUDA_VARIANT:-runtime}
+        - INSTALL_BITSANDBYTES=${INSTALL_BITSANDBYTES:-true}
     image: acestep-compose:latest
     container_name: acestep_app
     runtime: nvidia

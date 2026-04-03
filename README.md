@@ -55,6 +55,8 @@ This wrapper now follows ACE-Step docs for Linux/macOS inside the container:
 - Run `uv sync` to resolve and install dependencies
 - Start services with `uv run ...`
 
+By default, the image also installs `bitsandbytes` (controlled by `INSTALL_BITSANDBYTES=true`) so training paths can use 8-bit optimizers instead of falling back to standard AdamW.
+
 This avoids duplicate/conflicting manual installs from custom `pip` steps and stays aligned with upstream.
 
 ## Startup Model Pre-Download
