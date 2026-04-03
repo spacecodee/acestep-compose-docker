@@ -80,6 +80,8 @@ Set `RUN_MODE` in `.env`:
 
 ACE-Step already supports a rich `.env` contract upstream (for Gradio, API, and model behavior). This wrapper passes your `.env` directly into the container, so you can use official variables such as:
 
+- The global `.env` in this wrapper is also mounted as `/app/.env` inside the container, so ACE-Step's native `.env` loader reads the same values.
+
 - `ACESTEP_CONFIG_PATH`
 - `ACESTEP_LM_MODEL_PATH`
 - `ACESTEP_INIT_LLM`

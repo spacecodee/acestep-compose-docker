@@ -19,6 +19,7 @@ services:
       - "${PORT:-7860}:${PORT:-7860}"
       - "${ACESTEP_API_PORT:-8000}:${ACESTEP_API_PORT:-8000}"
     volumes:
+      - ./.env:/app/.env:ro
       - ./models:/root/.cache/huggingface
       - ./outputs:/app/outputs
     deploy:
