@@ -74,7 +74,7 @@ Set `RUN_MODE` in `.env`:
 | --- | --- | --- |
 | `gradio` | Runs Gradio UI only | `http://localhost:${PORT}` |
 | `api` | Runs API service only | `http://localhost:${ACESTEP_API_PORT}` |
-| `both` | Runs Gradio with `--enable-api` using ACE-Step's official combined mode | `http://localhost:${PORT}` and `http://localhost:${ACESTEP_API_PORT}` |
+| `both` | Runs API in background + Gradio in foreground | `http://localhost:${PORT}` and `http://localhost:${ACESTEP_API_PORT}` |
 
 ## ACE-Step .env Compatibility
 
