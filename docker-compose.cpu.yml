@@ -13,4 +13,5 @@ services:
     volumes:
       - ./.env:/app/.env:ro
       - ./models:/root/.cache/huggingface
+      - ./checkpoints:/app/checkpoints
       - ./outputs:/app/outputs

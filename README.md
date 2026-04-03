@@ -57,6 +57,24 @@ This wrapper now follows ACE-Step docs for Linux/macOS inside the container:
 
 This avoids duplicate/conflicting manual installs from custom `pip` steps and stays aligned with upstream.
 
+## Startup Model Pre-Download
+
+On container startup, this wrapper can pre-download models before launching services.
+
+Default behavior (equivalent commands):
+
+```bash
+uv run acestep-download --model acestep-v15-xl-base
+uv run acestep-download --model acestep-5Hz-lm-4B
+```
+
+Configure in `.env`:
+
+- `ACESTEP_AUTO_DOWNLOAD_MODELS=true|false`
+- `ACESTEP_PRELOAD_MODELS=acestep-v15-xl-base,acestep-5Hz-lm-4B`
+
+Downloaded checkpoints are persisted in `./checkpoints`.
+
 ## flash-attn
 
 No OS change is required. You can keep Ubuntu 22.04 and choose one of these modes in `.env`:
@@ -99,6 +117,8 @@ This keeps the Docker Compose setup aligned with ACE-Step documentation while st
 
 - `./models:/root/.cache/huggingface`
   - Persists HuggingFace model cache between container restarts/rebuilds.
+- `./checkpoints:/app/checkpoints`
+	- Persists ACE-Step model checkpoints and avoids repeated startup downloads.
 - `./outputs:/app/outputs`
   - Persists generated audio outputs.
 
