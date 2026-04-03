@@ -41,10 +41,10 @@ RUN set -eux; \
         torchvision==0.25.0+cu128 \
         torchaudio==2.10.0+cu128 \
         --extra-index-url https://download.pytorch.org/whl/cu128; \
-    # Exclude macOS-only deps and optional flash-attn from base Linux install.
-    exclude_re='^[[:space:]]*(mlx|mlx-lm|flash-attn|flash_attn)'; \
-    exclude_re="${exclude_re}([<>=!~].*)?$"; \
-    grep -Ev "$exclude_re" requirements.txt > /tmp/requirements.linux.txt; \
+    # Exclude macOS-only deps and any flash-attn variant (markers/specifiers included).
+    exclude_re='^[[:space:]]*(mlx|mlx-lm|flash[-_]attn)'; \
+    exclude_re="${exclude_re}(\$|[[:space:]]|\\[|[<>=!~;#]).*"; \
+    grep -Eiv "$exclude_re" requirements.txt > /tmp/requirements.linux.txt; \
     python -m pip install --no-cache-dir -r /tmp/requirements.linux.txt --no-deps; \
     python -m pip install --no-cache-dir -r /tmp/requirements.linux.txt; \
     if [ -d "acestep/third_parts/nano-vllm" ]; then \
