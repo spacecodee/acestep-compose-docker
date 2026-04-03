@@ -7,6 +7,7 @@ Docker Compose wrapper to deploy [ACE-Step 1.5](https://github.com/ace-step/ACE-
 This repository provides a production-friendly container setup for ACE-Step 1.5 with:
 
 - NVIDIA GPU passthrough (CUDA 12.8 runtime)
+- Official ACE-Step dependency flow via `uv sync`
 - Gradio UI and REST API support
 - Persistent model cache and output storage through bind mounts
 - Run-mode switching via environment variables (`gradio`, `api`, `both`)
@@ -46,19 +47,24 @@ Use the CPU override file for environments without a GPU:
 docker compose -f docker-compose.yml -f docker-compose.cpu.yml up --build
 ```
 
-## flash-attn (Optional or Required)
+## Dependency Installation (Official ACE-Step Flow)
+
+This wrapper now follows ACE-Step docs for Linux/macOS inside the container:
+
+- Install `uv`
+- Run `uv sync` to resolve and install dependencies
+- Start services with `uv run ...`
+
+This avoids duplicate/conflicting manual installs from custom `pip` steps and stays aligned with upstream.
+
+## flash-attn
 
 No OS change is required. You can keep Ubuntu 22.04 and choose one of these modes in `.env`:
 
-- `FLASH_ATTN_MODE=off`: never install `flash-attn`.
-- `FLASH_ATTN_MODE=auto` (default): install only if a compatible binary wheel exists.
-- `FLASH_ATTN_MODE=required`: fail the build if `flash-attn` cannot be installed.
+- Keep `ACESTEP_USE_FLASH_ATTENTION=true` in `.env` (enabled by default).
+- If your platform needs source compilation for GPU dependencies, set `CUDA_VARIANT=devel`.
 
-If you use `FLASH_ATTN_MODE=required`, also set:
-
-- `CUDA_VARIANT=devel`
-
-This uses the CUDA devel base image so source builds are possible when no wheel is available.
+ACE-Step auto-detects whether `flash_attn` is actually available and falls back safely when it is not.
 
 ## Run Modes
 
@@ -68,7 +74,7 @@ Set `RUN_MODE` in `.env`:
 | --- | --- | --- |
 | `gradio` | Runs Gradio UI only | `http://localhost:${PORT}` |
 | `api` | Runs API service only | `http://localhost:${ACESTEP_API_PORT}` |
-| `both` | Runs API in background + Gradio in foreground | `http://localhost:${PORT}` and `http://localhost:${ACESTEP_API_PORT}` |
+| `both` | Runs Gradio with `--enable-api` using ACE-Step's official combined mode | `http://localhost:${PORT}` and `http://localhost:${ACESTEP_API_PORT}` |
 
 ## ACE-Step .env Compatibility
 

@@ -8,11 +8,11 @@ API_HOST="${ACESTEP_API_HOST:-0.0.0.0}"
 API_PORT="${ACESTEP_API_PORT:-8000}"
 
 start_gradio() {
-  python acestep/acestep_v15_pipeline.py --server-name "${GRADIO_HOST}" --port "${GRADIO_PORT}"
+  uv run --no-sync acestep
 }
 
 start_api() {
-  python acestep/api_server.py --host "${API_HOST}" --port "${API_PORT}"
+  uv run --no-sync acestep-api
 }
 
 echo "Starting ACE-Step 1.5 in mode: ${RUN_MODE} (Gradio ${GRADIO_HOST}:${GRADIO_PORT}, API ${API_HOST}:${API_PORT})"
@@ -25,10 +25,7 @@ case "${RUN_MODE}" in
     start_api
     ;;
   both)
-    start_api &
-    API_PID=$!
-    trap 'kill "${API_PID}" 2>/dev/null || true' EXIT INT TERM
-    start_gradio
+    uv run --no-sync acestep --enable-api --port "${API_PORT}"
     ;;
   *)
     echo "Invalid RUN_MODE: ${RUN_MODE}. Expected: gradio, api, both." >&2

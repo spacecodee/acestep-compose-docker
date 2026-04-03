@@ -27,8 +27,6 @@ tests/
 !.agents/.gitkeep
 .github/
 !.github/workflows/.gitkeep
-scripts/
-!scripts/.gitkeep
 skills-lock.json
 __pycache__/
 *.pyc
