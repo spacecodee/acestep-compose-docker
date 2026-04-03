@@ -1,0 +1,15 @@
+# Use with: docker compose -f docker-compose.yml -f docker-compose.cpu.yml up
+services:
+  acestep:
+    runtime: runc
+    environment:
+      - CUDA_VISIBLE_DEVICES=
+      - RUN_MODE=gradio
+      - NVIDIA_VISIBLE_DEVICES=
+      - NVIDIA_DRIVER_CAPABILITIES=
+    ports:
+      - "${PORT:-7860}:${PORT:-7860}"
+      - "${ACESTEP_API_PORT:-8000}:${ACESTEP_API_PORT:-8000}"
+    volumes:
+      - ./models:/root/.cache/huggingface
+      - ./outputs:/app/outputs

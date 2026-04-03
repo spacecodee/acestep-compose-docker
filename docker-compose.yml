@@ -1,0 +1,35 @@
+services:
+  acestep:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: acestep-compose:latest
+    container_name: acestep_app
+    runtime: nvidia
+    env_file:
+      - .env
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - SERVER_NAME=${SERVER_NAME:-0.0.0.0}
+      - ACESTEP_API_HOST=${ACESTEP_API_HOST:-0.0.0.0}
+    ports:
+      - "${PORT:-7860}:${PORT:-7860}"
+      - "${ACESTEP_API_PORT:-8000}:${ACESTEP_API_PORT:-8000}"
+    volumes:
+      - ./models:/root/.cache/huggingface
+      - ./outputs:/app/outputs
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    healthcheck:
+      test: [ "CMD-SHELL", "/app/scripts/healthcheck.sh" ]
+      interval: 60s
+      timeout: 15s
+      retries: 3
+      start_period: 180s
+    restart: unless-stopped
