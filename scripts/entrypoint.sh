@@ -29,6 +29,31 @@ trim_spaces() {
   printf '%s' "$v"
 }
 
+configure_torchcodec_runtime_paths() {
+  local site_packages
+  local nvidia_libs
+
+  site_packages="$(uv run --no-sync python - <<'PY'
+import site
+paths = [p for p in site.getsitepackages() if "site-packages" in p]
+print(paths[0] if paths else "")
+PY
+)"
+
+  [ -n "${site_packages}" ] || return 0
+
+  nvidia_libs=""
+  for p in "${site_packages}"/nvidia/*/lib; do
+    [ -d "${p}" ] || continue
+    nvidia_libs="${nvidia_libs:+${nvidia_libs}:}${p}"
+  done
+
+  if [ -n "${nvidia_libs}" ]; then
+    export LD_LIBRARY_PATH="${nvidia_libs}:${LD_LIBRARY_PATH:-}"
+    echo "Configured NVIDIA runtime library paths for torchcodec."
+  fi
+}
+
 download_model_if_missing() {
   local model="$1"
   local model_dir="${CHECKPOINTS_DIR}/${model}"
@@ -130,6 +155,7 @@ start_api() {
 }
 
 echo "Starting ACE-Step 1.5 in mode: ${RUN_MODE} (Gradio ${GRADIO_HOST}:${GRADIO_PORT}, API ${API_HOST}:${API_PORT})"
+configure_torchcodec_runtime_paths
 
 if is_true "${PRELOAD_BACKGROUND}" && ! is_true "${PRELOAD_FATAL}"; then
   echo "Starting startup model preload in background."

@@ -4,8 +4,10 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        - CUDA_BASE_VERSION=${CUDA_BASE_VERSION:-12.8.0}
         - CUDA_VARIANT=${CUDA_VARIANT:-runtime}
         - INSTALL_BITSANDBYTES=${INSTALL_BITSANDBYTES:-true}
+        - INSTALL_TORCHCODEC_CUDA13_RUNTIME=${INSTALL_TORCHCODEC_CUDA13_RUNTIME:-true}
     image: acestep-compose:latest
     container_name: acestep_app
     runtime: nvidia

@@ -1,7 +1,9 @@
+ARG CUDA_BASE_VERSION=12.8.0
 ARG CUDA_VARIANT=runtime
-FROM nvidia/cuda:12.8.0-cudnn-${CUDA_VARIANT}-ubuntu22.04
+FROM nvidia/cuda:${CUDA_BASE_VERSION}-cudnn-${CUDA_VARIANT}-ubuntu22.04
 
 ARG INSTALL_BITSANDBYTES=true
+ARG INSTALL_TORCHCODEC_CUDA13_RUNTIME=true
 
 ENV PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
@@ -32,6 +34,12 @@ RUN set -eux; \
     uv sync --frozen || uv sync; \
     if [ "${INSTALL_BITSANDBYTES}" = "true" ]; then \
         uv pip install --python /app/.venv/bin/python bitsandbytes; \
+    fi; \
+    if [ "${INSTALL_TORCHCODEC_CUDA13_RUNTIME}" = "true" ]; then \
+        uv pip install --python /app/.venv/bin/python \
+            nvidia-cuda-runtime-cu13 \
+            nvidia-cuda-nvrtc-cu13 \
+            nvidia-nvjitlink-cu13; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 

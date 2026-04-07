@@ -6,7 +6,7 @@ Docker Compose wrapper to deploy [ACE-Step 1.5](https://github.com/ace-step/ACE-
 
 This repository provides a production-friendly container setup for ACE-Step 1.5 with:
 
-- NVIDIA GPU passthrough (CUDA 12.8 runtime)
+- NVIDIA GPU passthrough (CUDA 12.8 by default, switchable to CUDA 13)
 - Official ACE-Step dependency flow via `uv sync`
 - Gradio UI and REST API support
 - Persistent model cache and output storage through bind mounts
@@ -17,7 +17,7 @@ This repository provides a production-friendly container setup for ACE-Step 1.5 
 - Docker 24+
 - Docker Compose v2+
 - NVIDIA Container Toolkit installed and configured
-- NVIDIA driver compatible with CUDA 12.8 runtime
+- NVIDIA driver compatible with your selected CUDA base (`CUDA_BASE_VERSION`, default `12.8.0`)
 
 ## Quick Start
 
@@ -56,6 +56,10 @@ This wrapper now follows ACE-Step docs for Linux/macOS inside the container:
 - Start services with `uv run ...`
 
 By default, the image also installs `bitsandbytes` (controlled by `INSTALL_BITSANDBYTES=true`) so training paths can use 8-bit optimizers instead of falling back to standard AdamW.
+
+For MP3/Opus/AAC export reliability with `torchaudio + torchcodec`, the image can also install CUDA 13 user-space runtime libs (`INSTALL_TORCHCODEC_CUDA13_RUNTIME=true`). This avoids runtime errors such as missing `libnvrtc.so.13`.
+
+You can switch Docker base CUDA without changing files by setting `CUDA_BASE_VERSION` in `.env` (for example `12.8.0` or `13.0.0`).
 
 This avoids duplicate/conflicting manual installs from custom `pip` steps and stays aligned with upstream.
 
