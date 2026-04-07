@@ -8,6 +8,8 @@ API_HOST="${ACESTEP_API_HOST:-0.0.0.0}"
 API_PORT="${ACESTEP_API_PORT:-8000}"
 AUTO_DOWNLOAD_MODELS="${ACESTEP_AUTO_DOWNLOAD_MODELS:-true}"
 PRELOAD_MODELS="${ACESTEP_PRELOAD_MODELS:-acestep-v15-xl-base,acestep-5Hz-lm-4B}"
+PRELOAD_BACKGROUND="${ACESTEP_PRELOAD_BACKGROUND:-true}"
+PRELOAD_FATAL="${ACESTEP_PRELOAD_FATAL:-false}"
 CHECKPOINTS_DIR="${ACESTEP_CHECKPOINTS_DIR:-/app/checkpoints}"
 REPAIR_INVALID_MODELS="${ACESTEP_REPAIR_INVALID_MODELS:-true}"
 DEFAULT_DIT_MODEL="${ACESTEP_CONFIG_PATH:-acestep-v15-turbo}"
@@ -38,14 +40,21 @@ download_model_if_missing() {
 
   if [ -d "${model_dir}" ] && is_true "${REPAIR_INVALID_MODELS}"; then
     echo "Startup model appears incomplete/invalid, forcing re-download: ${model}"
-    uv run --no-sync acestep-download --model "${model}" --force
+    if ! uv run --no-sync acestep-download --model "${model}" --force; then
+      echo "Warning: Failed to re-download startup model: ${model}" >&2
+      return 1
+    fi
   else
     echo "Downloading startup model: ${model}"
-    uv run --no-sync acestep-download --model "${model}"
+    if ! uv run --no-sync acestep-download --model "${model}"; then
+      echo "Warning: Failed to download startup model: ${model}" >&2
+      return 1
+    fi
   fi
 
   if ! model_looks_valid "${model}"; then
     echo "Warning: Startup model still looks invalid after download: ${model}" >&2
+    return 1
   fi
 
   return 0
@@ -78,6 +87,7 @@ model_looks_valid() {
 download_startup_models() {
   local model
   local models_raw
+  local failures=0
 
   if ! is_true "${AUTO_DOWNLOAD_MODELS}"; then
     echo "Startup model downloads disabled (ACESTEP_AUTO_DOWNLOAD_MODELS=${AUTO_DOWNLOAD_MODELS})."
@@ -91,8 +101,20 @@ download_startup_models() {
   for model in "${models[@]}"; do
     model="$(trim_spaces "${model}")"
     [ -z "${model}" ] && continue
-    download_model_if_missing "${model}"
+    if ! download_model_if_missing "${model}"; then
+      failures=$((failures + 1))
+    fi
   done
+
+  if [ "${failures}" -gt 0 ]; then
+    if is_true "${PRELOAD_FATAL}"; then
+      echo "Startup model preload failed for ${failures} model(s) and PRELOAD_FATAL is enabled." >&2
+      return 1
+    fi
+    echo "Startup model preload had ${failures} failure(s); continuing service startup." >&2
+  fi
+
+  return 0
 }
 
 start_gradio() {
@@ -108,7 +130,13 @@ start_api() {
 }
 
 echo "Starting ACE-Step 1.5 in mode: ${RUN_MODE} (Gradio ${GRADIO_HOST}:${GRADIO_PORT}, API ${API_HOST}:${API_PORT})"
-download_startup_models
+
+if is_true "${PRELOAD_BACKGROUND}" && ! is_true "${PRELOAD_FATAL}"; then
+  echo "Starting startup model preload in background."
+  download_startup_models &
+else
+  download_startup_models
+fi
 
 case "${RUN_MODE}" in
   gradio)

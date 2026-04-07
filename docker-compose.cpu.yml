@@ -8,8 +8,8 @@ services:
       - NVIDIA_VISIBLE_DEVICES=
       - NVIDIA_DRIVER_CAPABILITIES=
     ports:
-      - "${PORT:-7860}:${PORT:-7860}"
-      - "${ACESTEP_API_PORT:-8000}:${ACESTEP_API_PORT:-8000}"
+      - "${HOST_BIND_IP:-0.0.0.0}:${PORT:-7860}:${PORT:-7860}"
+      - "${HOST_BIND_IP:-0.0.0.0}:${ACESTEP_API_PORT:-8000}:${ACESTEP_API_PORT:-8000}"
     volumes:
       - ./.env:/app/.env:ro
       - ./models:/root/.cache/huggingface

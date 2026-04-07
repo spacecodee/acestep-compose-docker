@@ -74,6 +74,8 @@ Configure in `.env`:
 
 - `ACESTEP_AUTO_DOWNLOAD_MODELS=true|false`
 - `ACESTEP_PRELOAD_MODELS=acestep-v15-xl-base,acestep-5Hz-lm-4B`
+- `ACESTEP_PRELOAD_BACKGROUND=true|false` (recommended `true` on Lightning so UI starts sooner)
+- `ACESTEP_PRELOAD_FATAL=true|false` (when `true`, startup fails if preload fails)
 - `ACESTEP_REPAIR_INVALID_MODELS=true|false` (force re-download if a model folder exists but is invalid/incomplete)
 
 Downloaded checkpoints are persisted in `./checkpoints`.
@@ -131,5 +133,8 @@ This keeps the Docker Compose setup aligned with ACE-Step documentation while st
 
 - Open inbound ports `7860` (Gradio) and `8000` (API) in your Lightning.ai Studio.
 - If you override ports in `.env`, open `PORT` and `ACESTEP_API_PORT` values instead.
+- Keep `HOST_BIND_IP=0.0.0.0` so Docker publishes ports on all interfaces (required for public Cloudspaces URLs).
 - GPU is automatically consumed through the NVIDIA runtime in `docker-compose.yml`.
 - For CPU validation in Studio or local dev, use the override compose file described above.
+- If you get an initial HTTP 502 on the public URL, check container logs and wait for startup downloads/model initialization to finish before retrying.
+- Browser warning `Permissions-Policy: Unrecognized feature 'browsing-topics'` is proxy/browser related and can be ignored.
