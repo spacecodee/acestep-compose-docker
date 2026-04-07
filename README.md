@@ -98,6 +98,8 @@ By default, the image also installs `bitsandbytes` (controlled by `INSTALL_BITSA
 
 For MP3/Opus/AAC export reliability with `torchaudio + torchcodec`, the image can also install CUDA 13 user-space runtime libs (`nvidia-cuda-runtime`, `nvidia-cuda-nvrtc`, `nvidia-nvjitlink`) when `INSTALL_TORCHCODEC_CUDA13_RUNTIME=true`. This avoids runtime errors such as missing `libnvrtc.so.13` on CUDA 12 base images, and is skipped automatically when the Docker base is already CUDA 13.
 
+Additionally, the build applies a small runtime compatibility patch to ACE-Step's MP3 save path so temporary WAV generation uses `soundfile` directly (then `ffmpeg` encodes MP3), avoiding `torchaudio->torchcodec` loader failures for MP3 export.
+
 You can switch Docker base CUDA without changing files by setting `CUDA_BASE_VERSION` in `.env` (for example `12.8.0` or `13.0.0`).
 
 This avoids duplicate/conflicting manual installs from custom `pip` steps and stays aligned with upstream.
