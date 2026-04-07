@@ -39,6 +39,45 @@ This repository provides a production-friendly container setup for ACE-Step 1.5 
 
 On first run, model downloads can be large (roughly 10-20 GB). The `./models` volume avoids re-downloading across restarts.
 
+## Common Commands
+
+Use these commands in the project root (`acestep-compose-docker`):
+
+```bash
+# Rebuild image without cache (recommended after Dockerfile/build-arg changes)
+docker compose build --no-cache acestep
+
+# Recreate and start service in background
+docker compose up -d --force-recreate acestep
+
+# Full reset + rebuild + start
+docker compose down
+docker compose build --no-cache acestep
+docker compose up -d acestep
+
+# Service status
+docker compose ps
+
+# Follow service logs (compose service name)
+docker compose logs -f acestep
+
+# Show only recent logs (last 10 minutes)
+docker compose logs --since=10m acestep
+
+# Follow container logs (container name)
+docker logs -f acestep_app
+
+# Enter container shell
+docker compose exec acestep bash
+
+# Check mapped host port for Gradio/API
+docker compose port acestep 7860
+docker compose port acestep 8000
+
+# Quick health status
+docker inspect -f '{{.State.Health.Status}}' acestep_app
+```
+
 ## CPU-only Testing
 
 Use the CPU override file for environments without a GPU:
@@ -57,7 +96,7 @@ This wrapper now follows ACE-Step docs for Linux/macOS inside the container:
 
 By default, the image also installs `bitsandbytes` (controlled by `INSTALL_BITSANDBYTES=true`) so training paths can use 8-bit optimizers instead of falling back to standard AdamW.
 
-For MP3/Opus/AAC export reliability with `torchaudio + torchcodec`, the image can also install CUDA 13 user-space runtime libs (`INSTALL_TORCHCODEC_CUDA13_RUNTIME=true`). This avoids runtime errors such as missing `libnvrtc.so.13`.
+For MP3/Opus/AAC export reliability with `torchaudio + torchcodec`, the image can also install CUDA 13 user-space runtime libs (`nvidia-cuda-runtime`, `nvidia-cuda-nvrtc`, `nvidia-nvjitlink`) when `INSTALL_TORCHCODEC_CUDA13_RUNTIME=true`. This avoids runtime errors such as missing `libnvrtc.so.13` on CUDA 12 base images, and is skipped automatically when the Docker base is already CUDA 13.
 
 You can switch Docker base CUDA without changing files by setting `CUDA_BASE_VERSION` in `.env` (for example `12.8.0` or `13.0.0`).
 

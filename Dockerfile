@@ -2,6 +2,8 @@ ARG CUDA_BASE_VERSION=12.8.0
 ARG CUDA_VARIANT=runtime
 FROM nvidia/cuda:${CUDA_BASE_VERSION}-cudnn-${CUDA_VARIANT}-ubuntu22.04
 
+ARG CUDA_BASE_VERSION
+
 ARG INSTALL_BITSANDBYTES=true
 ARG INSTALL_TORCHCODEC_CUDA13_RUNTIME=true
 
@@ -36,10 +38,15 @@ RUN set -eux; \
         uv pip install --python /app/.venv/bin/python bitsandbytes; \
     fi; \
     if [ "${INSTALL_TORCHCODEC_CUDA13_RUNTIME}" = "true" ]; then \
-        uv pip install --python /app/.venv/bin/python \
-            nvidia-cuda-runtime-cu13 \
-            nvidia-cuda-nvrtc-cu13 \
-            nvidia-nvjitlink-cu13; \
+        cuda_major="${CUDA_BASE_VERSION%%.*}"; \
+        if [ "${cuda_major}" -lt 13 ]; then \
+            uv pip install --python /app/.venv/bin/python \
+                nvidia-cuda-runtime \
+                nvidia-cuda-nvrtc \
+                nvidia-nvjitlink; \
+        else \
+            echo "Skipping extra CUDA13 runtime pip packages (CUDA base already ${CUDA_BASE_VERSION})."; \
+        fi; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
